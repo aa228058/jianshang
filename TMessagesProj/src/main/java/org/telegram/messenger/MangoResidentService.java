@@ -239,7 +239,7 @@ public final class MangoResidentService extends Service {
             Intent autoStart = MangoBatteryHelper.autoStartIntent();
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BATTERY_CHANNEL)
                     .setSmallIcon(android.R.drawable.stat_notify_sync)
-                    .setContentTitle("让芒果在后台活下来")
+                    .setContentTitle("让见山客户端在后台活下来")
                     .setContentText("点「允许后台」关闭电池优化，否则自动化会被系统掐断")
                     .setStyle(new NotificationCompat.BigTextStyle().bigText(
                             "点「允许后台」关闭电池优化，否则自动化会被系统掐断；"

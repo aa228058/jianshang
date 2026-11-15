@@ -11,7 +11,7 @@
     <string name="MangoSearchEmpty">没有找到相关设置</string>
     <string name="MangoSearchResults">搜索结果 · 所有分类</string>
     <string name="MangoRecentSettings">最近修改设置</string>
-    <string name="MangoRecentSettingsInfo">记录最近 200 次芒果设置修改。点选记录可恢复该次修改前的值。全局设置会影响所有账号。</string>
+    <string name="MangoRecentSettingsInfo">记录最近 200 次见山客户端设置修改。点选记录可恢复该次修改前的值。全局设置会影响所有账号。</string>
     <string name="MangoHistoryEmpty">还没有设置修改记录</string>
     <string name="MangoRestoreChange">恢复修改前的设置</string>
     <string name="MangoRestoreChangeInfo">%1$s\n%2$s → %3$s\n\n恢复后当前值将变为：%2$s</string>
@@ -20,7 +20,7 @@
     <string name="MangoValueDefault">默认</string>
     <string name="MangoResetSettings">重置操作与扩展设置</string>
     <string name="MangoResetFirst">第一步：确认重置范围</string>
-    <string name="MangoResetFirstInfo">将恢复所有芒果行为开关、外观参数、消息操作、通知声音与媒体播放偏好，并停用每日任务和自动回复。\n账号、聊天消息、下载文件、标签收藏、任务内容与代理凭据不会删除。设备通用设置会影响其他账号。</string>
+    <string name="MangoResetFirstInfo">将恢复所有见山客户端行为开关、外观参数、消息操作、通知声音与媒体播放偏好，并停用每日任务和自动回复。\n账号、聊天消息、下载文件、标签收藏、任务内容与代理凭据不会删除。设备通用设置会影响其他账号。</string>
     <string name="MangoResetSecond">第二步：执行重置</string>
     <string name="MangoResetSecondInfo">再次确认：将立即恢复设置默认值并停止自动任务。设置修改记录保留，可逐项恢复。</string>
     <string name="MangoResetContinue">继续确认</string>

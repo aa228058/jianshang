@@ -288,7 +288,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/vnd.app.mango.im.android.profile"/>
+                <data android:mimeType="vnd.android.cursor.item/vnd.app.jianshang.im.android.profile"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -332,8 +332,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/vnd.app.mango.im.android.call"/>
-                <data android:mimeType="vnd.android.cursor.item/vnd.app.mango.im.android.call.video"/>
+                <data android:mimeType="vnd.android.cursor.item/vnd.app.jianshang.im.android.call"/>
+                <data android:mimeType="vnd.android.cursor.item/vnd.app.jianshang.im.android.call.video"/>
             </intent-filter>
         </activity-alias>
         <activity
