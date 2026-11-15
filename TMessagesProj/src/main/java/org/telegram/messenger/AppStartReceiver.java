@@ -23,6 +23,7 @@ public class AppStartReceiver extends BroadcastReceiver {
                     SharedConfig.saveConfig();
                 }
                 ApplicationLoader.startPushService();
+                MangoResidentService.startIfNeeded();
             });
         }
     }

@@ -8166,6 +8166,13 @@ public class MessagesController extends BaseController implements NotificationCe
         if (user == null || whenReceivedFullUser == null && (loadingFullUsers.contains(user.id) || !force && loadedFullUsers.get(user.id) > 0)) {
             return;
         }
+        // min 用户的 access_hash 是上下文绑定的，拿它直接调 users.getFullUser 会被服务端判
+        // USER_ID_INVALID，资料页就一片空白。这里不发送注定失败的请求，
+        // 改走 inputUserFromMessage（用"他在某条消息里的上下文"换完整资料）。
+        if (whenReceivedFullUser == null && user.min) {
+            org.telegram.ui.Components.MangoActivitiesHook.onMinUser(user);
+            return;
+        }
         loadingFullUsers.add(user.id);
         TLRPC.TL_users_getFullUser req = new TLRPC.TL_users_getFullUser();
         req.id = getInputUser(user);

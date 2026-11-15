@@ -1,0 +1,9 @@
+# 复制成 local.properties（同目录），把下面的值换成你自己的
+#
+# api_id / api_hash 申请：https://my.telegram.org → API development tools
+# 不填就会退回仓库里那个所有人共用的公开值（容易被限流，正式发版别用）
+APP_API_ID=12345678
+APP_API_HASH=0123456789abcdef0123456789abcdef
+
+# Android SDK 路径（Android Studio 会自动写）
+# sdk.dir=/path/to/Android/sdk

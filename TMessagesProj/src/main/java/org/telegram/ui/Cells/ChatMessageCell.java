@@ -17764,9 +17764,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         // 拦截撤回：如果消息被标记为已删除，在时间前显示红色"已删除"
         if (currentMessageObject.deleted) {
             SpannableStringBuilder deletedBuilder = new SpannableStringBuilder();
-            String deletedText = "已删除 ";
+            String deletedText = "已撤回 ";
             deletedBuilder.append(deletedText);
-            deletedBuilder.setSpan(new ForegroundColorSpan(0xFFFF0000), 0, deletedText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            deletedBuilder.setSpan(new ForegroundColorSpan(0xFF8A8A8A), 0, deletedText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             deletedBuilder.append(currentTimeString);
             currentTimeString = deletedBuilder;
         }
@@ -19286,7 +19286,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             restoreToSponosoredAlpha = canvas.saveLayerAlpha(0, 0, getMeasuredWidth(), getMeasuredHeight(), sponosoredAlpha);
         }
         if (currentMessageObject.deleted && !currentMessageObject.deletedByThanos) {
-            restoreToDeletedAlpha = canvas.saveLayerAlpha(0, 0, getMeasuredWidth(), getMeasuredHeight(), 128);
+            restoreToDeletedAlpha = canvas.saveLayerAlpha(0, 0, getMeasuredWidth(), getMeasuredHeight(), 255);
         }
 
         setupTextColors();

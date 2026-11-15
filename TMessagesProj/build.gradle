@@ -103,6 +103,13 @@ android {
         minSdkVersion 21
         targetSdkVersion 35
 
+        // API 凭据从 local.properties 读（这个文件被 .gitignore 忽略，适合放私密信息）。
+        // 没配就退回仓库自带的公开值。
+        def _apiId = getProps("APP_API_ID")
+        def _apiHash = getProps("APP_API_HASH")
+        buildConfigField "int", "APP_API_ID", (_apiId ?: "30425524")
+        buildConfigField "String", "APP_API_HASH", "\"" + (_apiHash ?: "c4e1367499c8dd8ee04572cc3eb81170") + "\""
+
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
 
         multiDexEnabled true

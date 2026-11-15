@@ -372,6 +372,9 @@ public class ApplicationLoader extends Application {
                     }
                     MangoAutoJoinChannels.tick();
                     MangoMessageReminderManager.tick();
+                    // 保活：有人在用后台自动化就把前台服务拉起来，
+                    // 否则这个 5 秒心跳在进程被冻结后就是死的
+                    MangoResidentService.startIfNeeded();
                     AndroidUtilities.runOnUIThread(this, 5000);
                 }
             });

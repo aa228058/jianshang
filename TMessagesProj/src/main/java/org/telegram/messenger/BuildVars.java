@@ -26,8 +26,10 @@ public class BuildVars {
     public static boolean NO_SCOPED_STORAGE = Build.VERSION.SDK_INT <= 29;
     public static String BUILD_VERSION_STRING = BuildConfig.BUILD_VERSION_STRING;
 
-    public static int APP_ID = 30425524;
-    public static String APP_HASH = "c4e1367499c8dd8ee04572cc3eb81170";
+    // 从 local.properties 的 APP_API_ID / APP_API_HASH 读（见 TMessagesProj/build.gradle）。
+    // 没配就用仓库自带的公开值 —— 那个是所有人共用的，正式发版务必换成自己的。
+    public static int APP_ID = BuildConfig.APP_API_ID;
+    public static String APP_HASH = BuildConfig.APP_API_HASH;
 
     // SafetyNet key for Google Identity SDK, set it to empty to disable
     public static String SAFETYNET_KEY = "YOUR_GOOGLE_API_KEY";

@@ -185,6 +185,13 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
     public static final int TAB_SAVED_MESSAGES = 12;
     public static final int TAB_BOT_PREVIEWS = 13;
     public static final int TAB_GIFTS = 14;
+    /**
+     * 「活动」tab 复用 TAB_BOT_PREVIEWS(13) 这个 id。
+     * 13 只在 user.bot 时出现，而活动 tab 只在 !user.bot 时出现，两者互斥；
+     * 用现成的 id 可以避开 sharedMediaData[selectedType] 这类按类型下标的越界
+     * （自定义 id=15 实测会 ArrayIndexOutOfBoundsException: length=6; index=15）。
+     */
+    public static final int TAB_USER_ACTIVITIES = 13;
     private static final int TAB_STORIES_ALBUM_PREFIX = 0x00010000;
     private static final int TAB_STORIES_ALBUM_MASK = 0x0000FFFF;
 
@@ -5582,7 +5589,15 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
 
     public RecyclerListView getCurrentListView() {
         if (mediaPages[0].selectedType == TAB_BOT_PREVIEWS) {
-            return botPreviewsContainer.getCurrentListView();
+            if (botPreviewsContainer != null) {
+                return botPreviewsContainer.getCurrentListView();
+            }
+            // 活动 tab 复用了 13，容器当然是 null —— 交出活动页的列表，
+            // 让 ProfileActivity$NestedFrameLayout 的嵌套滚动继续有对象可用
+            RecyclerListView activitiesList = MangoActivitiesHook.getListView(this);
+            if (activitiesList != null) {
+                return activitiesList;
+            }
         }
         if (mediaPages[0].selectedType == TAB_GIFTS) {
             return giftsContainer.getCurrentListView();
@@ -6565,6 +6580,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
     }
 
     public void setUserInfo(TLRPC.UserFull userInfo) {
+        MangoActivitiesHook.onSetUserInfo(this, userInfo);
         boolean stories_pinned_available = this.userInfo != null && this.userInfo.stories_pinned_available;
         this.userInfo = userInfo;
         updateTabs(true);
@@ -6673,7 +6689,9 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         if ((hasStories || hasBotPreviews) != scrollSlidingTextTabStrip.hasTab(TAB_STORIES)) {
             changed++;
         }
-        if (hasEditBotPreviews != scrollSlidingTextTabStrip.hasTab(TAB_BOT_PREVIEWS)) {
+        // 13 号位现在归活动 tab，这一项再算就会每次 updateTabs 都误判"tab 变了"，
+        // 导致反复重建 tab 条 + 选中态回跳，所以直接跳过。
+        if (hasEditBotPreviews && !scrollSlidingTextTabStrip.hasTab(TAB_BOT_PREVIEWS)) {
             changed++;
         }
         if (isSearchingStories() != scrollSlidingTextTabStrip.hasTab(TAB_STORIES)) {
@@ -6767,6 +6785,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                 idToView = null;
             }
             final ArrayList<Pair<Integer, CharSequence>> tabs = new ArrayList<>();
+            MangoActivitiesHook.prependTab(this, tabs);
 
             if (isSearchingStories()) {
                 tabs.add(new Pair(TAB_STORIES, getString(R.string.ProfileStories)));
@@ -6881,6 +6900,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
             mediaPages[0].selectedType = id;
         }
         wasReordering = scrollSlidingTextTabStrip.isReordering();
+        MangoActivitiesHook.syncTabs(this);
         scrollSlidingTextTabStrip.finishAddingTabs();
         onSelectedTabChanged();
         checkStoriesTabsPosition();
@@ -6907,6 +6927,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
     }
 
     private void switchToCurrentSelectedMode(boolean animated) {
+        MangoActivitiesHook.schedulePage(this);
         boolean sections = false;
         if (giftsContainer != null) {
             giftsContainer.resetReordering();
