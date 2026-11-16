@@ -729,7 +729,19 @@ public class ConnectionsManager extends BaseController {
         return native_checkProxy(currentAccount, address, port, username, password, secret, requestTimeDelegate);
     }
 
-    public void setAppPaused(final boolean value, final boolean byScreenState) {
+    public void setAppPaused(boolean value, final boolean byScreenState) {
+        // 【见山】保活开启时，不允许 App 进后台就把网络 pause 掉。
+        // Telegram 原本的做法是：进后台 → native_pauseNetwork() → 连接休眠，
+        // 然后靠 FCM 推送把进程叫醒。我们没接 FCM（没有 google-services.json），
+        // 一旦 pause 就再也没有人叫醒它，现象就是"切走几分钟后收不到消息"。
+        if (value && !byScreenState) {
+            try {
+                if (org.telegram.messenger.MangoResidentService.isKeepAliveEnabled()) {
+                    value = false;
+                }
+            } catch (Throwable ignore) {
+            }
+        }
         if (!byScreenState) {
             appPaused = value;
             if (BuildVars.LOGS_ENABLED) {

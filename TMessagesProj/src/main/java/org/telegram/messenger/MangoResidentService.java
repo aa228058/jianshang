@@ -96,6 +96,24 @@ public final class MangoResidentService extends Service {
     // ------------------------------------------------------------ lifecycle
 
     /** 有任一账号开着需要后台的功能时才常驻。 */
+    /**
+     * 保活开关是否开启（任一端开启即算）。
+     * 用于告诉 ConnectionsManager：别在后台把网络 pause 掉。
+     */
+    public static boolean isKeepAliveEnabled() {
+        try {
+            for (int account : UserConfig.getActivatedAccounts()) {
+                if (MangoSettings.getBoolean(account, "resident_keep_alive")
+                        || MangoSettings.getBoolean(account, "auto_read")
+                        || MangoSettings.getBoolean(account, "auto_read_random_reply")) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+        return false;
+    }
+
     public static boolean isNeeded() {
         for (int account : UserConfig.getActivatedAccounts()) {
             if (MangoSettings.getBoolean(account, "auto_read")
