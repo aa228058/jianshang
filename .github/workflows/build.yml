@@ -85,6 +85,14 @@ jobs:
           fi
           ls -la "$SDK/cmake"
 
+          # 上游 Dockerfile 里把 build-tools 30.0.3 的 dx 复制进 35.0.0，
+          # Telegram 的构建脚本会用到 dx，缺了会挂
+          echo "=== 安装 build-tools 30.0.3 并复制 dx ==="
+          "$SDKM" --install "build-tools;30.0.3" > /tmp/bt30.log 2>&1 || { tail -20 /tmp/bt30.log; exit 1; }
+          cp -f "$SDK/build-tools/30.0.3/dx" "$SDK/build-tools/35.0.0/dx" || true
+          cp -f "$SDK/build-tools/30.0.3/lib/dx.jar" "$SDK/build-tools/35.0.0/lib/dx.jar" || true
+          ls -la "$SDK/build-tools/35.0.0/dx" || echo "  (dx 没复制成功，可能不需要)"
+
       - name: Check NDK / CMake really installed
         run: |
           set -uo pipefail
@@ -131,7 +139,7 @@ jobs:
         run: |
           chmod +x gradlew
           set +e
-          ./gradlew :TMessagesProj_App:assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
+          ./gradlew :TMessagesProj_App:assembleAfatRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
           STATUS=${PIPESTATUS[0]}
           if [ "$STATUS" -ne 0 ]; then
             echo ""
@@ -146,13 +154,14 @@ jobs:
 
       - name: Show outputs
         if: always()
-        run: ls -la TMessagesProj_App/build/outputs/apk/release/ || true
+        run: |
+          find TMessagesProj_App/build/outputs -name "*.apk" -exec ls -la {} \; 2>/dev/null || true
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: jianshang-release
-          path: TMessagesProj_App/build/outputs/apk/release/*.apk
+          path: TMessagesProj_App/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
