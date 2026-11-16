@@ -37,16 +37,24 @@ public final class MangoResidentService extends Service {
     private static final String CHANNEL = "mango_resident";
     private static final String ACTION_STOP = "mango.resident.stop";
 
-    /** 屏幕亮着时快一点，熄屏后慢一点，省电。 */
-    private static final long TICK_SCREEN_ON = 1000L;
-    private static final long TICK_SCREEN_OFF = 3000L;
-    /** 网络唤醒间隔，和 MangoUserBroadcastManager.INTERVAL_MS 对齐。 */
-    private static final long NET_WAKE_GAP = MangoUserBroadcastManager.INTERVAL_MS;
+    /**
+     * 节奏参数（原来 1s/3s tick + 常驻唤醒锁，手机明显发烫）。
+     * 现在：唤醒锁只在"干活那一下"抓 3 秒，其余时间让它睡；
+     * 熄屏后 30 秒一跳，网络唤醒间隔也拉到 30 秒，发热明显下降。
+     */
+    private static final long TICK_SCREEN_ON = 5_000L;
+    private static final long TICK_SCREEN_OFF = 30_000L;
+    private static final long NET_WAKE_GAP_ON = 10_000L;
+    private static final long NET_WAKE_GAP_OFF = 30_000L;
+    /** 只在真正需要联网那一瞬抓锁，3 秒后自动释放。 */
+    private static final long WAKE_LOCK_MS = 3_000L;
 
     private Handler handler;
     private PowerManager.WakeLock wakeLock;
     private final long[] nextNetWake = new long[UserConfig.MAX_ACCOUNT_COUNT];
     private volatile boolean killed;
+    /** 通知只发一次，避免每跳重绘。 */
+    private volatile boolean notificationShown;
     /** 服务是不是已经在跑，避免每 5 秒重复 startForegroundService 被系统拦。 */
     private static volatile boolean running;
 
@@ -61,18 +69,27 @@ public final class MangoResidentService extends Service {
                 return;
             }
             final long now = SystemClock.elapsedRealtime();
+            final boolean screenOn = isScreenOn();
+            final long netGap = screenOn ? NET_WAKE_GAP_ON : NET_WAKE_GAP_OFF;
+            boolean woke = false;
             for (int account : UserConfig.getActivatedAccounts()) {
                 if (now >= nextNetWake[account]) {
+                    if (!woke && wakeLock != null) {
+                        // 抓 3 秒就放，不再整段持有 —— 常驻唤醒锁才是发烫的主因
+                        wakeLock.acquire(WAKE_LOCK_MS);
+                        woke = true;
+                    }
                     // 只"温和恢复"，不把账号标成在线。
                     ConnectionsManager.getInstance(account).resumeNetworkMaybe();
-                    nextNetWake[account] = now + NET_WAKE_GAP;
+                    nextNetWake[account] = now + netGap;
                 }
             }
-            if (wakeLock != null && !wakeLock.isHeld()) {
-                wakeLock.acquire(10 * 60 * 1000L);
+            if (!notificationShown) {
+                // 通知只挂一次，别每跳都重发
+                showNotification();
+                notificationShown = true;
             }
-            showNotification();
-            handler.postDelayed(this, isScreenOn() ? TICK_SCREEN_ON : TICK_SCREEN_OFF);
+            handler.postDelayed(this, screenOn ? TICK_SCREEN_ON : TICK_SCREEN_OFF);
         }
     };
 
