@@ -16,6 +16,7 @@ final class MangoSettingsSearchIndex {
         ArrayList<Entry> entries = new ArrayList<>();
         entries.add(new Entry(92, R.string.MangoBroadcastTitle, R.string.MangoBroadcastTitle, "私聊 群发 用户 批量 三秒 3秒 broadcast private users"));
         entries.add(new Entry(91, R.string.MangoAutoReadReplyAddGroup, R.string.MangoAutoReadReplyGroups, "已读乱回 自动已读 随机回复 群组 私聊 random reply groups private"));
+        entries.add(new Entry(92, R.string.MangoResidentKeepAlive, R.string.MangoResidentKeepAliveInfo, "保活 后台 常驻 前台服务 驻留 keep alive background foreground service"));
         entries.add(new Entry(85, R.string.MangoUnifiedBottomTab, R.string.MangoUnifiedInbox, "跨账号 多账号 汇总 统一 消息 inbox accounts"));
         entries.add(new Entry(86, R.string.MangoUnifiedInbox, R.string.MangoUnifiedInbox, "跨账号 多账号 汇总 统一 消息 inbox accounts"));
         entries.add(new Entry(87, R.string.MangoRestrictionTitleSetting, R.string.AppIdentitySettings, "双向 限制 名称 标题 见山客户端"));

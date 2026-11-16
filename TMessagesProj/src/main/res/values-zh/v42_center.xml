@@ -49,6 +49,8 @@
     <string name="MangoDisableReceivedSound">禁用消息收到提示音</string>
     <string name="MangoDisableReceivedSoundInfo">关闭新消息提示音，保留其他通知方式。</string>
     <string name="MangoAutoRead">自动已读消息</string>
+    <string name="MangoResidentKeepAlive">后台保活</string>
+    <string name="MangoResidentKeepAliveInfo">退出应用后仍保持连接，自动已读、自动回复继续生效。会用一条低优先级常驻通知显示运行状态；建议同时在系统里允许"忽略电池优化"，否则仍可能被系统掐断。</string>
     <string name="MangoAutoReadInfo">应用前台且联网时仅处理新消息。隐藏已读状态设置仍优先生效。</string>
     <string name="MangoAutoReadRandomReply">自动已读并随机回复</string>
     <string name="MangoAutoReadRandomReplyInfo">应用前台且联网时仅处理新消息，回复随机组成的 8 个汉字；每个会话最多每 3 秒一次，不发送付费消息。默认仅私聊生效，群组需手动选择。隐藏已读状态设置仍优先生效。</string>

@@ -40,6 +40,7 @@ public final class MangoFeatureRegistry {
         features.add(new Feature(1018, "hide_proxy_icon", R.string.MangoHideProxyIcon, R.string.MangoHideProxyIconInfo, APPEARANCE));
         features.add(new Feature(1019, "disable_pull_down_search", R.string.MangoDisablePullSearch, R.string.MangoDisablePullSearchInfo, APPEARANCE));
         features.add(new Feature(1020, "collapse_message_menu", R.string.MangoCollapseMessageMenu, R.string.MangoCollapseMessageMenuInfo, CHAT));
+        features.add(new Feature(1021, "resident_keep_alive", R.string.MangoResidentKeepAlive, R.string.MangoResidentKeepAliveInfo, AUTOMATION));
         FEATURES = Collections.unmodifiableList(features);
     }
     public static Feature find(int id) {
