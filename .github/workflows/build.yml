@@ -33,48 +33,36 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 不用第三方 action：它经常因为预装 SDK 权限、cmdline-tools 版本过旧而挂。
-      # 直接下一份 commandline-tools 到用户目录，自己管。
-      - name: Setup Android SDK (manual)
+      # GitHub 的 ubuntu-latest 自带 Android SDK，直接用它的，不重复安装
+      - name: Use preinstalled Android SDK
         run: |
-          set -euo pipefail
-          SDK="$HOME/android-sdk"
-          mkdir -p "$SDK/cmdline-tools"
-          curl -sSL -o /tmp/clt.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q /tmp/clt.zip -d /tmp/clt
-          mv /tmp/clt/cmdline-tools "$SDK/cmdline-tools/latest"
+          set -uo pipefail
+          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_HOME=$SDK"     >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_HOME=$SDK" >> "$GITHUB_ENV"
-          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "sdkmanager 版本："
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --version
+          echo "PATH=$SDK/cmdline-tools/latest/bin:$PATH" >> "$GITHUB_ENV"
+          echo "=== SDK 根目录 ==="; ls "$SDK" || true
+          echo "=== 自带 NDK ==="; ls "$SDK/ndk" 2>/dev/null || echo "  (无)"
+          echo "=== 自带 CMake ==="; ls "$SDK/cmake" 2>/dev/null || echo "  (无)"
+          echo "=== 自带 platforms ==="; ls "$SDK/platforms" 2>/dev/null || echo "  (无)"
 
-      - name: Install SDK / NDK / CMake
+      - name: Install NDK 21.4 + CMake
         run: |
           set -uo pipefail
           SDKM="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
-
-          echo "=== 仓库里能装到的 cmake / ndk 版本 ==="
-          "$SDKM" --list 2>/dev/null | grep -E "cmake;3\.(10|22)|ndk;21\.4" | sed 's/^/  /' || true
-
-          # 必需：装不上就直接失败，日志里看得见是哪一条
-          for pkg in "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;21.4.7075529"; do
-            echo "--- 安装 $pkg"
-            yes | "$SDKM" --install "$pkg" || { echo "!! $pkg 安装失败"; exit 1; }
-          done
-
-          # 可选：CMake（SDK 里的包名带完整版本号，3.10.2 对应 3.10.2.4988404）
+          if [ ! -x "$SDKM" ]; then echo "!! 找不到 sdkmanager: $SDKM"; ls "$ANDROID_SDK_ROOT/cmdline-tools" || true; fi
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          echo "=== 开始装 ndk;21.4.7075529 ==="
+          yes | "$SDKM" --install "ndk;21.4.7075529" 2>&1 | tail -20 || echo "!! NDK 安装失败"
+          echo "=== 开始装 cmake ==="
           for pkg in "cmake;3.10.2.4988404" "cmake;3.22.1"; do
-            echo "--- 尝试 $pkg"
-            if yes | "$SDKM" --install "$pkg"; then echo "✔ $pkg"; break; else echo "… $pkg 没有，换下一个"; fi
+            echo "--- $pkg"
+            yes | "$SDKM" --install "$pkg" 2>&1 | tail -5 || true
+            [ -d "$ANDROID_SDK_ROOT/cmake" ] && ls "$ANDROID_SDK_ROOT/cmake" && break
           done
-
-          echo "=== 装完的目录 ==="
-          ls "$ANDROID_SDK_ROOT" || true
-          echo "--- ndk:"; ls "$ANDROID_SDK_ROOT/ndk" 2>/dev/null || echo "  (无)"
-          echo "--- cmake:"; ls "$ANDROID_SDK_ROOT/cmake" 2>/dev/null || echo "  (无)"
+          echo "=== 最终状态 ==="
+          ls "$ANDROID_SDK_ROOT/ndk" 2>/dev/null || echo "  NDK 目录不存在"
+          ls "$ANDROID_SDK_ROOT/cmake" 2>/dev/null || echo "  CMake 目录不存在"
 
       # 关键：把仓库 Secrets 里的 API 凭据写进 local.properties
       - name: Write local.properties (API credentials)
