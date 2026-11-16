@@ -52,18 +52,29 @@ jobs:
 
       - name: Install SDK / NDK / CMake
         run: |
-          set -euo pipefail
-          export SDK="$ANDROID_SDK_ROOT"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0" \
-            "cmake;3.10.2" \
-            "ndk;21.4.7075529"
+          set -uo pipefail
+          SDKM="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+
+          echo "=== 仓库里能装到的 cmake / ndk 版本 ==="
+          "$SDKM" --list 2>/dev/null | grep -E "cmake;3\.(10|22)|ndk;21\.4" | sed 's/^/  /' || true
+
+          # 必需：装不上就直接失败，日志里看得见是哪一条
+          for pkg in "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;21.4.7075529"; do
+            echo "--- 安装 $pkg"
+            yes | "$SDKM" --install "$pkg" || { echo "!! $pkg 安装失败"; exit 1; }
+          done
+
+          # 可选：CMake（SDK 里的包名带完整版本号，3.10.2 对应 3.10.2.4988404）
+          for pkg in "cmake;3.10.2.4988404" "cmake;3.22.1"; do
+            echo "--- 尝试 $pkg"
+            if yes | "$SDKM" --install "$pkg"; then echo "✔ $pkg"; break; else echo "… $pkg 没有，换下一个"; fi
+          done
+
           echo "=== 装完的目录 ==="
-          ls "$SDK"
-          ls "$SDK/ndk" 2>/dev/null || true
+          ls "$ANDROID_SDK_ROOT" || true
+          echo "--- ndk:"; ls "$ANDROID_SDK_ROOT/ndk" 2>/dev/null || echo "  (无)"
+          echo "--- cmake:"; ls "$ANDROID_SDK_ROOT/cmake" 2>/dev/null || echo "  (无)"
 
       # 关键：把仓库 Secrets 里的 API 凭据写进 local.properties
       - name: Write local.properties (API credentials)
