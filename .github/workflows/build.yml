@@ -33,6 +33,25 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # 版本号从 git tag 推导：v1.0.12 → versionName=1.0.12, versionCode=10012
+      # 规则 主*10000 + 次*100 + 修订，保证永远递增；gradle 还会再 ×10 + abiVersionCode
+      - name: Derive version from tag
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            CORE="${GITHUB_REF_NAME#v}"
+            MAJOR=$(echo "$CORE" | cut -d. -f1 | tr -dc '0-9')
+            MINOR=$(echo "$CORE" | cut -d. -f2 | tr -dc '0-9'); MINOR=${MINOR:-0}
+            PATCH=$(echo "$CORE" | cut -d. -f3 | tr -dc '0-9'); PATCH=${PATCH:-0}
+            CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
+            echo "tag=$GITHUB_REF_NAME → versionName=$CORE versionCode=$CODE"
+            sed -i "s|^APP_VERSION_NAME=.*|APP_VERSION_NAME=$CORE|" gradle.properties
+            sed -i "s|^APP_VERSION_CODE=.*|APP_VERSION_CODE=$CODE|" gradle.properties
+          else
+            echo "非 tag 触发，沿用 gradle.properties 里的版本"
+          fi
+          grep -n '^APP_VERSION' gradle.properties
+
       # GitHub 的 ubuntu-latest 自带 Android SDK，直接用它的，不重复安装
       - name: Use preinstalled Android SDK
         run: |
