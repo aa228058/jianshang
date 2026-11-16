@@ -52,6 +52,8 @@ public final class MangoResidentService extends Service {
     private Handler handler;
     private PowerManager.WakeLock wakeLock;
     private final long[] nextNetWake = new long[UserConfig.MAX_ACCOUNT_COUNT];
+    /** 连续多少跳没连上。用来判断"连接已经断了，需要硬重连"。 */
+    private final int[] deadTicks = new int[UserConfig.MAX_ACCOUNT_COUNT];
     private volatile boolean killed;
     /** 通知只发一次，避免每跳重绘。 */
     private volatile boolean notificationShown;
@@ -73,6 +75,27 @@ public final class MangoResidentService extends Service {
             final long netGap = screenOn ? NET_WAKE_GAP_ON : NET_WAKE_GAP_OFF;
             boolean woke = false;
             for (int account : UserConfig.getActivatedAccounts()) {
+                // ── 连接看门狗 ──
+                // 长连接最怕的是"进程活着、服务在跑，但 socket 已经死了"：
+                // 运营商 NAT 超时、WiFi 切 4G、基站切换都会造成这种静默断连，
+                // 表现就是通知栏一切正常、消息却收不到。
+                // 这里每跳检查一次连接状态，连续 4 跳（亮屏约 20 秒 / 熄屏约 2 分钟）
+                // 没连上就调 checkConnection() 重新宣告网络可用 + resumeNetworkMaybe()，
+                // 强制底层重建连接。
+                try {
+                    ConnectionsManager cm = ConnectionsManager.getInstance(account);
+                    if (cm.getConnectionState() == ConnectionsManager.ConnectionStateConnected) {
+                        deadTicks[account] = 0;
+                    } else if (++deadTicks[account] >= 4) {
+                        deadTicks[account] = 0;
+                        cm.checkConnection();
+                        cm.resumeNetworkMaybe();
+                        if (BuildVars.LOGS_ENABLED) {
+                            FileLog.d("[keepalive] connection dead, force reconnect account=" + account);
+                        }
+                    }
+                } catch (Throwable ignore) {
+                }
                 if (now >= nextNetWake[account]) {
                     if (!woke && wakeLock != null) {
                         // 抓 3 秒就放，不再整段持有 —— 常驻唤醒锁才是发烫的主因
