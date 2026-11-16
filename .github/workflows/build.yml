@@ -85,6 +85,21 @@ jobs:
           fi
           ls -la "$SDK/cmake"
 
+      - name: Check NDK / CMake really installed
+        run: |
+          set -uo pipefail
+          echo "=== NDK 目录 ==="
+          ls -la "$ANDROID_SDK_ROOT/ndk" || echo "  (无 ndk 目录)"
+          echo "=== 每个 NDK 的 source.properties ==="
+          for f in "$ANDROID_SDK_ROOT"/ndk/*/source.properties; do
+            [ -f "$f" ] && { echo "--- $f"; head -5 "$f"; }
+          done
+          echo "=== CMake 目录 ==="
+          ls -la "$ANDROID_SDK_ROOT/cmake" || echo "  (无 cmake 目录)"
+          echo "=== 预装 platforms / build-tools ==="
+          ls "$ANDROID_SDK_ROOT/platforms" || true
+          ls "$ANDROID_SDK_ROOT/build-tools" || true
+
       # 关键：把仓库 Secrets 里的 API 凭据写进 local.properties
       - name: Write local.properties (API credentials)
         run: |
@@ -115,7 +130,19 @@ jobs:
       - name: Build release
         run: |
           chmod +x gradlew
-          ./gradlew :TMessagesProj_App:assembleRelease --no-daemon --stacktrace
+          set +e
+          ./gradlew :TMessagesProj_App:assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
+          STATUS=${PIPESTATUS[0]}
+          if [ "$STATUS" -ne 0 ]; then
+            echo ""
+            echo "================ 错误摘要（日志末尾，方便截图）================"
+            awk '/What went wrong/,0' /tmp/build.log | head -60
+            echo "=============================================================="
+            echo ""
+            echo "---- 最后 80 行 ----"
+            tail -80 /tmp/build.log
+            exit "$STATUS"
+          fi
 
       - name: Show outputs
         if: always()
