@@ -30,3 +30,8 @@ google-services.json
 # Python cache
 __pycache__/
 *.pyc
+# 签名相关的导出文件（base64 等等价于私钥，绝不能提交）
+jks.txt
+*.jks.txt
+keystore.txt
+SEcrets*.txt
