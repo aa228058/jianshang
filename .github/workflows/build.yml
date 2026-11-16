@@ -143,14 +143,35 @@ jobs:
           STATUS=${PIPESTATUS[0]}
           if [ "$STATUS" -ne 0 ]; then
             echo ""
-            echo "================ 错误摘要（日志末尾，方便截图）================"
-            awk '/What went wrong/,0' /tmp/build.log | head -60
-            echo "=============================================================="
+            echo "---- 最后 40 行 ----"
+            tail -40 /tmp/build.log
             echo ""
-            echo "---- 最后 80 行 ----"
-            tail -80 /tmp/build.log
+            echo "======== 错误摘要（日志最后一段，截图这一段就够）========"
+            echo ">>> What went wrong:"
+            awk '/What went wrong/,0' /tmp/build.log | head -40
+            echo ">>> 关键错误行:"
+            grep -nE "error:|Error:|FAILURE:|Caused by:|Could not|not found|No version of NDK|CMake Error|Execution failed for task" /tmp/build.log | head -25
+            echo "========================================================"
             exit "$STATUS"
           fi
+
+      - name: Error summary (写在运行页面顶部)
+        if: failure()
+        run: |
+          {
+            echo "## ❌ 构建失败 · 错误摘要"
+            echo ""
+            echo '```'
+            if [ -f /tmp/build.log ]; then
+              awk '/What went wrong/,0' /tmp/build.log | head -40
+              echo ""
+              echo "--- 关键行 ---"
+              grep -nE "error:|FAILURE:|Caused by:|Could not|not found|No version of NDK|CMake Error|Execution failed for task" /tmp/build.log | head -20
+            else
+              echo "(/tmp/build.log 不存在：失败发生在构建步骤之前)"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Show outputs
         if: always()
