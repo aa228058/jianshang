@@ -1,9 +1,18 @@
-# 复制成 local.properties（同目录），把下面的值换成你自己的
+# ===================================================================
+# 复制成 local.properties（同目录），填你自己的值
+# 这个文件在 .gitignore 里，不会被提交，适合放私密信息
+# ===================================================================
+
+# ---- Telegram API 凭据（登录必需，但仓库自带一组公开值兜底）----
+# 申请：https://my.telegram.org → 用手机号登录 → API development tools
+#       App title 随便填（如 jianshang），Short name 填 jianshang
+#       Platform 选 Android → Create application
+#       → 拿到 App api_id（数字）和 App api_hash（32 位十六进制）
 #
-# api_id / api_hash 申请：https://my.telegram.org → API development tools
-# 不填就会退回仓库里那个所有人共用的公开值（容易被限流，正式发版别用）
+# 重要：换 api_id 会让已经登录的用户掉线（服务端认为这是另一个应用），
+#       所以要在正式发版【之前】就换好，发版后别再动。
 APP_API_ID=12345678
 APP_API_HASH=0123456789abcdef0123456789abcdef
 
-# Android SDK 路径（Android Studio 会自动写）
-# sdk.dir=/path/to/Android/sdk
+# ---- Android SDK 路径（Android Studio 一般会自动写这一行）----
+# sdk.dir=/home/you/Android/Sdk
