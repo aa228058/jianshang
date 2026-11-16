@@ -196,4 +196,12 @@ android {
     }
 }
 
-apply plugin: 'com.google.gms.google-services'
+// Google Services 插件需要 google-services.json（上游用 .gitignore 排除它）。
+// 没有这个文件时，插件会让 :processAfatReleaseGoogleServices 直接失败：
+//   "File google-services.json is missing. The Google Services Plugin cannot function without it."
+// 所以改成按需应用：有文件就启用（FCM 推送可用），没有就跳过（Telegram 登录/消息完全不受影响）。
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.lifecycle("[见山] 未找到 google-services.json，跳过 Google Services 插件 —— FCM 推送不可用，其余功能正常")
+}
