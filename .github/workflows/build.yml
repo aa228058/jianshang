@@ -48,21 +48,42 @@ jobs:
 
       - name: Install NDK 21.4 + CMake
         run: |
-          set -uo pipefail
-          SDKM="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKM" ]; then echo "!! 找不到 sdkmanager: $SDKM"; ls "$ANDROID_SDK_ROOT/cmdline-tools" || true; fi
+          set -euo pipefail
+          SDK="$ANDROID_SDK_ROOT"
+          SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          echo "SDK=$SDK"
+          echo "sdkmanager=$SDKM"
+          ls -la "$SDKM" || true
+
+          # 预装 SDK 可能属于 root，先拿到写权限
+          sudo chown -R "$(id -u):$(id -g)" "$SDK" 2>/dev/null || true
+
           yes | "$SDKM" --licenses >/dev/null 2>&1 || true
-          echo "=== 开始装 ndk;21.4.7075529 ==="
-          yes | "$SDKM" --install "ndk;21.4.7075529" 2>&1 | tail -20 || echo "!! NDK 安装失败"
-          echo "=== 开始装 cmake ==="
-          for pkg in "cmake;3.10.2.4988404" "cmake;3.22.1"; do
-            echo "--- $pkg"
-            yes | "$SDKM" --install "$pkg" 2>&1 | tail -5 || true
-            [ -d "$ANDROID_SDK_ROOT/cmake" ] && ls "$ANDROID_SDK_ROOT/cmake" && break
-          done
-          echo "=== 最终状态 ==="
-          ls "$ANDROID_SDK_ROOT/ndk" 2>/dev/null || echo "  NDK 目录不存在"
-          ls "$ANDROID_SDK_ROOT/cmake" 2>/dev/null || echo "  CMake 目录不存在"
+
+          echo "=== 安装 ndk;21.4.7075529 ==="
+          if ! "$SDKM" --install "ndk;21.4.7075529" > /tmp/ndk.log 2>&1; then
+            echo "!!! NDK 安装失败，日志如下："
+            tail -40 /tmp/ndk.log
+            exit 1
+          fi
+          tail -5 /tmp/ndk.log
+          echo "--- $SDK/ndk:"; ls "$SDK/ndk"
+
+          echo "=== 安装 CMake ==="
+          if ! "$SDKM" --install "cmake;3.10.2.4988404" > /tmp/cmake.log 2>&1; then
+            echo "!!! cmake;3.10.2.4988404 安装失败，尝试 3.22.1"
+            tail -20 /tmp/cmake.log
+            "$SDKM" --install "cmake;3.22.1" > /tmp/cmake2.log 2>&1 || { tail -20 /tmp/cmake2.log; exit 1; }
+          fi
+          echo "--- $SDK/cmake:"; ls "$SDK/cmake"
+
+          # gradle 找的是 cmake/<version>，sdkmanager 装出来是 3.10.2.4988404，
+          # 建个软链兼容 '3.10.2'
+          if [ -d "$SDK/cmake/3.10.2.4988404" ] && [ ! -e "$SDK/cmake/3.10.2" ]; then
+            ln -s "$SDK/cmake/3.10.2.4988404" "$SDK/cmake/3.10.2"
+            echo "已建软链 cmake/3.10.2 -> 3.10.2.4988404"
+          fi
+          ls -la "$SDK/cmake"
 
       # 关键：把仓库 Secrets 里的 API 凭据写进 local.properties
       - name: Write local.properties (API credentials)
